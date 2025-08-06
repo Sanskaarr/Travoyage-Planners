@@ -51,7 +51,7 @@ router.put('/:id', getPackage, async (req, res) => {
 // Delete a package by ID
 router.delete('/:id', getPackage, async (req, res) => {
   try {
-    await res.pkg.remove();
+    await res.pkg.deleteOne();
     res.json({ message: 'Package deleted' });
   } catch (err) {
     res.status(500).json({ message: err.message });
