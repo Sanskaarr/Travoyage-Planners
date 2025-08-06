@@ -1,4 +1,16 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+
+type Testimonial = {
+  _id: string;
+  name: string;
+  email: string;
+  comment: string;
+  rating: number;
+  avatar?: string;
+  package?: string;
+  date?: string;
+};
+import axios from 'axios';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,69 +24,29 @@ const Testimonials = () => {
   const [testimonialForm, setTestimonialForm] = useState({
     name: '',
     email: '',
-    message: '',
+    comment: '',
     rating: 5
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const { toast } = useToast();
 
-  // Mock testimonials data
-  const testimonials = [
-    {
-      id: 1,
-      name: "Sarah Johnson",
-      avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b742?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80",
-      rating: 5,
-      message: "Absolutely incredible experience! The team at Travoyage planned every detail perfectly. Our European tour was seamless and unforgettable. Highly recommend!",
-      package: "European Cultural Tour",
-      date: "March 2024"
-    },
-    {
-      id: 2,
-      name: "Mike Chen",
-      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80",
-      rating: 5,
-      message: "The tropical paradise getaway exceeded all expectations. Crystal clear waters, amazing resort, and the customer service was top-notch throughout the entire trip.",
-      package: "Tropical Paradise Getaway",
-      date: "February 2024"
-    },
-    {
-      id: 3,
-      name: "Emily Rodriguez",
-      avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80",
-      rating: 5,
-      message: "Amazing mountain adventure! The guides were knowledgeable and the views were breathtaking. Perfect for anyone who loves nature and outdoor activities.",
-      package: "Mountain Adventure Trek",
-      date: "January 2024"
-    },
-    {
-      id: 4,
-      name: "David Thompson",
-      avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80",
-      rating: 4,
-      message: "Great value for money and excellent organization. The culinary journey through Asia was a feast for the senses. Will definitely book again!",
-      package: "Asian Culinary Journey",
-      date: "December 2023"
-    },
-    {
-      id: 5,
-      name: "Lisa Wang",
-      avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80",
-      rating: 5,
-      message: "The African safari was a once-in-a-lifetime experience. Seeing the wildlife up close was magical. The accommodation and service were exceptional.",
-      package: "African Safari Experience",
-      date: "November 2023"
-    },
-    {
-      id: 6,
-      name: "Alex Martinez",
-      avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80",
-      rating: 5,
-      message: "NYC nightlife package was incredible! Amazing restaurants, great shows, and the rooftop experiences were unforgettable. Perfect for young travelers!",
-      package: "City Lights & Nightlife",
-      date: "October 2023"
-    }
-  ];
+  useEffect(() => {
+    const fetchTestimonials = async () => {
+      try {
+        const res = await axios.get('http://localhost:5050/api/testimonials');
+        setTestimonials(res.data as Testimonial[]);
+      } catch (err) {
+        toast({
+          title: "Failed to load testimonials",
+          description: err.message,
+          variant: "destructive",
+        });
+      }
+    };
+
+    fetchTestimonials();
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -95,16 +67,23 @@ const Testimonials = () => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    try {
+      await axios.post('http://localhost:5050/api/testimonials', testimonialForm);
+      toast({
+        title: "Testimonial Submitted!",
+        description: "Thank you! Your testimonial Matter to us.",
+      });
 
-    toast({
-      title: "Testimonial Submitted!",
-      description: "Thank you for your feedback. Your testimonial is pending approval and will be published soon.",
-    });
-
-    setTestimonialForm({ name: '', email: '', message: '', rating: 5 });
-    setIsSubmitting(false);
+      setTestimonialForm({ name: '', email: '', comment: '', rating: 5 });
+    } catch (err) {
+      toast({
+        title: "Submission failed",
+        description: err.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const renderStars = (rating: number) => {
@@ -151,7 +130,7 @@ const Testimonials = () => {
         {/* Testimonials Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
           {testimonials.map((testimonial) => (
-            <Card key={testimonial.id} className="relative overflow-hidden hover:shadow-lg transition-shadow">
+            <Card key={testimonial._id} className="relative overflow-hidden hover:shadow-lg transition-shadow">
               <Quote className="absolute top-4 right-4 h-8 w-8 text-primary/20" />
               <CardHeader>
                 <div className="flex items-center space-x-4">
@@ -173,7 +152,7 @@ const Testimonials = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground leading-relaxed">
-                  "{testimonial.message}"
+                  "{testimonial.comment}"
                 </p>
               </CardContent>
             </Card>
@@ -226,11 +205,11 @@ const Testimonials = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="message">Your Testimonial *</Label>
+                  <Label htmlFor="comment">Your Testimonial *</Label>
                   <Textarea
-                    id="message"
-                    name="message"
-                    value={testimonialForm.message}
+                    id="comment"
+                    name="comment"
+                    value={testimonialForm.comment}
                     onChange={handleInputChange}
                     required
                     placeholder="Tell us about your experience with Travoyage Planners..."
