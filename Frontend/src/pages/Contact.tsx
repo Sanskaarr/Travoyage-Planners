@@ -11,7 +11,7 @@ const Contact = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    mobile: '',
+    subject: '',
     message: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -29,16 +29,37 @@ const Contact = () => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    try {
+      const response = await fetch('http://localhost:5050/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
 
-    toast({
-      title: "Message Sent!",
-      description: "Thank you for your inquiry. We'll get back to you within 24 hours.",
-    });
+      const data = await response.json();
 
-    setFormData({ name: '', email: '', mobile: '', message: '' });
-    setIsSubmitting(false);
+      if (!response.ok) {
+        throw new Error(data.message || 'Something went wrong');
+      }
+
+      toast({
+        title: "Message Sent!",
+        description: "Thank you for your inquiry. We'll get back to you within 24 hours.",
+      });
+
+      setFormData({ name: '', email: '', subject: '', message: '' });
+    } catch (error) {
+      const err = error as Error;
+      toast({
+        title: "Error",
+        description: err.message || 'Failed to send message.',
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -160,14 +181,15 @@ const Contact = () => {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="mobile">Mobile Number</Label>
+                    <Label htmlFor="subject">Subject *</Label>
                     <Input
-                      id="mobile"
-                      name="mobile"
-                      type="tel"
-                      value={formData.mobile}
+                      id="subject"
+                      name="subject"
+                      type="text"
+                      value={formData.subject}
                       onChange={handleInputChange}
-                      placeholder="Enter your mobile number"
+                      required
+                      placeholder="Enter a subject"
                     />
                   </div>
                   
